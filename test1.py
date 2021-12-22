@@ -2,12 +2,12 @@ import cv2
  
 # distance from camera to object(face) measured
 # centimeter
-Known_distance = 76.2
+Known_distance = 60
  
  
 # width of face in the real world or Object Plane
 # centimeter
-Known_width = 14.3
+Known_width = 13
  
 # Colors
 GREEN = (0, 255, 0)
@@ -19,7 +19,8 @@ BLACK = (0, 0, 0)
 fonts = cv2.FONT_HERSHEY_COMPLEX
  
 # face detector object
-face_detector = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+face_detector = cv2.CascadeClassifier('./haar-cascade-files-master/haarcascade_frontalface_default.xml')
+
  
 # focal length finder function
 def Focal_Length_Finder(measured_distance, real_width, width_in_rf_image):
@@ -60,10 +61,34 @@ def face_data(image):
     # return the face width in pixel
     return face_width
  
- 
+def detect_exceptions(lenght: float) -> None:
+    return None
+
+def correct_exception(length: float) -> None:
+    return None
+
+def save_length_sql(length: float) -> None:
+    return None
+
+def detect_close_monitor(distance: float, mvt_no: int) -> None:
+    distance_list = []
+
+    if len(distance_list) <= mvt_no:
+        distance_list.append(distance)
+
+    else:
+        distance_list.pop(0)
+        distance_list.append[distance]
+
+    return sum(distance_list)
+    
+
+def black_out_screen(length: float) -> None:
+    return None
+
 # reading reference_image from directory
 ref_image = cv2.imread("sample_image.jpg")
- 
+
 # find the face width(pixels) in the reference_image
 ref_image_face_width = face_data(ref_image)
  
@@ -73,8 +98,8 @@ ref_image_face_width = face_data(ref_image)
 # known_width(centimeters)
 Focal_length_found = Focal_Length_Finder(
     Known_distance, Known_width, ref_image_face_width)
- 
-print(Focal_length_found)
+
+# print(f'focal length found is {Focal_length_found}')
  
 # show the reference image
 cv2.imshow("sample_image.jpg", ref_image)
@@ -83,9 +108,12 @@ cv2.imshow("sample_image.jpg", ref_image)
 # can get frame from it
 cap = cv2.VideoCapture(0)
  
+if not cap. isOpened():
+    raise IOError("Cannot open webcam")
+
 # looping through frame, incoming from
 # camera/video
-while True:
+while cap.isOpened():
  
     # reading the frame from camera
     _, frame = cap.read()
@@ -103,6 +131,7 @@ while True:
         # these arguments the Focal_Length,
         # Known_width(centimeters),
         # and Known_distance(centimeters)
+        
         Distance = Distance_finder(
             Focal_length_found, Known_width, face_width_in_frame)
  
