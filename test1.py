@@ -1,5 +1,19 @@
 import cv2
+from datetime import datetime
+import numpy as np
  
+class distance_check():
+
+    def __init__(self, distance_limit) -> None:
+        self.distance_limit = 0
+        self.distance_all = []
+        self.distance_ten_items = []
+
+
+    def _distance_store(self, distance: float) -> list:
+        self.distance_all.append(distance)
+
+
 # distance from camera to object(face) measured
 # centimeter
 Known_distance = 60
@@ -8,6 +22,8 @@ Known_distance = 60
 # width of face in the real world or Object Plane
 # centimeter
 Known_width = 13
+
+distance_limit = 50
  
 # Colors
 GREEN = (0, 255, 0)
@@ -80,7 +96,7 @@ def detect_close_monitor(distance: float, mvt_no: int) -> None:
         distance_list.pop(0)
         distance_list.append[distance]
 
-    return sum(distance_list)
+    return np.mean(distance_list)
     
 
 def black_out_screen(length: float) -> None:
@@ -134,7 +150,9 @@ while cap.isOpened():
         
         Distance = Distance_finder(
             Focal_length_found, Known_width, face_width_in_frame)
- 
+        
+        now = datetime.now()
+
         # draw line as background of text
         cv2.line(frame, (30, 30), (230, 30), RED, 32)
         cv2.line(frame, (30, 30), (230, 30), BLACK, 28)
@@ -143,7 +161,15 @@ while cap.isOpened():
         cv2.putText(
             frame, f"Distance: {round(Distance,2)} CM", (30, 35),
           fonts, 0.6, GREEN, 2)
- 
+
+        print(f'now: {now}; distance: {round(Distance,2)} CM')
+
+        if round(Distance, 2) < distance_limit:
+            print('Too close')
+
+    else: print('face not recognised')
+
+
     # show the frame on the screen
     cv2.imshow("frame", frame)
  
