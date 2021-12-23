@@ -1,8 +1,6 @@
 import cv2
 from datetime import datetime
 import numpy as np
-from sqlalchemy import create_engine
-import pymysql
 
  
 class distance_check():
@@ -187,3 +185,18 @@ cap.release()
  
 # closing the the windows that are opened
 cv2.destroyAllWindows()
+
+with open("distance.txt", 'w') as f: 
+    columns = '|'.join(distance_dict.keys())
+    f.write(f'{columns}\n')
+    no_values = len(list(distance_dict.values())[0])
+    n = 0
+    
+    while n < no_values:
+        txt = []
+        for col in columns.split('|'):
+            txt.append(str(distance_dict[col][n]))
+
+        txt_str = '|'.join(txt)
+        f.write(f'{txt_str}\n')
+        n += 1
