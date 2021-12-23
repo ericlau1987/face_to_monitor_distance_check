@@ -1,17 +1,62 @@
 import cv2
 from datetime import datetime
 import numpy as np
+from sqlalchemy import create_engine
+import pymysql
+
  
 class distance_check():
 
-    def __init__(self, distance_limit) -> None:
-        self.distance_limit = 0
+    def __init__(self, distance_limit, items_considered) -> None:
+        self.distance_limit = distance_limit
         self.distance_all = []
-        self.distance_ten_items = []
+        self.items_considered = items_considered
 
-
-    def _distance_store(self, distance: float) -> list:
+    def distance_store(self, distance: float) -> list:
         self.distance_all.append(distance)
+
+    def avg_distance(self) -> float:
+        return np.mean(self.distance_all[-self.items_considered:])
+
+    def check_distance_exception(self) -> bool:
+
+        if self.avg_distance() < self.distance_limit:
+            return True
+        else: return False
+
+class upload_mysql():
+
+    def __init__(self) -> None:
+        """
+        If mysql is not launched, run the following scripts:
+        mysql -u root
+        """
+        self.sqlEngine = create_engine('mysql+pymysql://root:@127.0.0.1/face_to_monitor_distance', pool_recycle=3600)
+        self.dbConnection = self.sqlEngine.connect()
+
+        self.table_name = None
+
+    def table_existence(self):
+        
+        print("start")
+        # cursor = self.dbConnection.execute()
+        sql_query = """
+                SELECT COUNT(*)
+                FROM information_schema.tables 
+                WHERE table_schema = 'face_to_monitor_distance'
+                AND table_name= """ + """'""" + self.table_name + """'""" + """
+        """
+
+        self.dbConnection.execute(sql_query)
+
+        row = cursor.fetchall()
+    
+        if not row:
+            return True
+
+        else: return False
+
+
 
 
 # distance from camera to object(face) measured
@@ -22,8 +67,6 @@ Known_distance = 60
 # width of face in the real world or Object Plane
 # centimeter
 Known_width = 13
-
-distance_limit = 50
  
 # Colors
 GREEN = (0, 255, 0)
@@ -76,31 +119,6 @@ def face_data(image):
  
     # return the face width in pixel
     return face_width
- 
-def detect_exceptions(lenght: float) -> None:
-    return None
-
-def correct_exception(length: float) -> None:
-    return None
-
-def save_length_sql(length: float) -> None:
-    return None
-
-def detect_close_monitor(distance: float, mvt_no: int) -> None:
-    distance_list = []
-
-    if len(distance_list) <= mvt_no:
-        distance_list.append(distance)
-
-    else:
-        distance_list.pop(0)
-        distance_list.append[distance]
-
-    return np.mean(distance_list)
-    
-
-def black_out_screen(length: float) -> None:
-    return None
 
 # reading reference_image from directory
 ref_image = cv2.imread("sample_image.jpg")
@@ -126,6 +144,8 @@ cap = cv2.VideoCapture(0)
  
 if not cap. isOpened():
     raise IOError("Cannot open webcam")
+
+distance_check = distance_check(distance_limit=50, items_considered=20)
 
 # looping through frame, incoming from
 # camera/video
@@ -153,6 +173,8 @@ while cap.isOpened():
         
         now = datetime.now()
 
+        distance_check.distance_store(Distance)
+
         # draw line as background of text
         cv2.line(frame, (30, 30), (230, 30), RED, 32)
         cv2.line(frame, (30, 30), (230, 30), BLACK, 28)
@@ -162,10 +184,13 @@ while cap.isOpened():
             frame, f"Distance: {round(Distance,2)} CM", (30, 35),
           fonts, 0.6, GREEN, 2)
 
-        print(f'now: {now}; distance: {round(Distance,2)} CM')
+        avg_distance = distance_check.avg_distance()
+        print(f'now: {now}; distance: {round(Distance,2)} CM; avg distance: {avg_distance}')
 
-        if round(Distance, 2) < distance_limit:
+        if distance_check.check_distance_exception():
             print('Too close')
+        
+        else: pass
 
     else: print('face not recognised')
 
