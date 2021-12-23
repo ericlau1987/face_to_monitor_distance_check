@@ -24,41 +24,6 @@ class distance_check():
             return True
         else: return False
 
-class upload_mysql():
-
-    def __init__(self) -> None:
-        """
-        If mysql is not launched, run the following scripts:
-        mysql -u root
-        """
-        self.sqlEngine = create_engine('mysql+pymysql://root:@127.0.0.1/face_to_monitor_distance', pool_recycle=3600)
-        self.dbConnection = self.sqlEngine.connect()
-
-        self.table_name = None
-
-    def table_existence(self):
-        
-        print("start")
-        # cursor = self.dbConnection.execute()
-        sql_query = """
-                SELECT COUNT(*)
-                FROM information_schema.tables 
-                WHERE table_schema = 'face_to_monitor_distance'
-                AND table_name= """ + """'""" + self.table_name + """'""" + """
-        """
-
-        self.dbConnection.execute(sql_query)
-
-        row = cursor.fetchall()
-    
-        if not row:
-            return True
-
-        else: return False
-
-
-
-
 # distance from camera to object(face) measured
 # centimeter
 Known_distance = 60
@@ -121,7 +86,8 @@ def face_data(image):
     return face_width
 
 # reading reference_image from directory
-ref_image = cv2.imread("sample_image.jpg")
+image_name = "sample_image.jpg"
+ref_image = cv2.imread(image_name)
 
 # find the face width(pixels) in the reference_image
 ref_image_face_width = face_data(ref_image)
@@ -136,7 +102,7 @@ Focal_length_found = Focal_Length_Finder(
 # print(f'focal length found is {Focal_length_found}')
  
 # show the reference image
-cv2.imshow("sample_image.jpg", ref_image)
+cv2.imshow(image_name, ref_image)
  
 # initialize the camera object so that we
 # can get frame from it
@@ -146,6 +112,15 @@ if not cap. isOpened():
     raise IOError("Cannot open webcam")
 
 distance_check = distance_check(distance_limit=50, items_considered=20)
+
+distance_dict = {
+    'image_name':[],
+    'date_time':[],
+    'distances':[],
+    'avg_distances':[],
+    'distance_limit':[]
+
+}
 
 # looping through frame, incoming from
 # camera/video
@@ -186,6 +161,11 @@ while cap.isOpened():
 
         avg_distance = distance_check.avg_distance()
         print(f'now: {now}; distance: {round(Distance,2)} CM; avg distance: {avg_distance}')
+        distance_dict['image_name'].append(image_name)
+        distance_dict['date_time'].append(now)
+        distance_dict['distances'].append(Distance)
+        distance_dict['avg_distances'].append(avg_distance)
+        distance_dict['distance_limit'].append(distance_check.distance_limit)
 
         if distance_check.check_distance_exception():
             print('Too close')
