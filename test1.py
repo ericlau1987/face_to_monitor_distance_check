@@ -122,11 +122,16 @@ distance_dict = {
 }
 
 image_open = True
+process_pid = None
+
+f = open("distance.txt", 'w')
+columns = 'image_name|date_time|distances|avg_distances|distance_limit'
+f.write(f'{columns}\n')
 
 # looping through frame, incoming from
 # camera/video
 while cap.isOpened():
- 
+    row = []
     # reading the frame from camera
     _, frame = cap.read()
  
@@ -162,11 +167,14 @@ while cap.isOpened():
 
         avg_distance = distance_check.avg_distance()
         print(f'now: {now}; distance: {round(Distance,2)} CM; avg distance: {avg_distance}')
-        distance_dict['image_name'].append(image_name)
-        distance_dict['date_time'].append(now)
-        distance_dict['distances'].append(Distance)
-        distance_dict['avg_distances'].append(avg_distance)
-        distance_dict['distance_limit'].append(distance_check.distance_limit)
+        row.append(image_name)
+        row.append(str(now))
+        row.append(str(Distance))
+        row.append(str(avg_distance))
+        row.append(str(distance_check.distance_limit))
+        row = '|'.join(row)
+
+        f.write(f'{row}\n')
 
         if distance_check.check_distance_exception():
             print('Too close')
@@ -207,18 +215,3 @@ cap.release()
  
 # closing the the windows that are opened
 cv2.destroyAllWindows()
-
-with open("distance.txt", 'w') as f: 
-    columns = '|'.join(distance_dict.keys())
-    f.write(f'{columns}\n')
-    no_values = len(list(distance_dict.values())[0])
-    n = 0
-    
-    while n < no_values:
-        txt = []
-        for col in columns.split('|'):
-            txt.append(str(distance_dict[col][n]))
-
-        txt_str = '|'.join(txt)
-        f.write(f'{txt_str}\n')
-        n += 1
