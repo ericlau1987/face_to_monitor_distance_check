@@ -1,13 +1,36 @@
 import cv2
+from datetime import datetime
+import numpy as np
+import os
+
  
+class distance_check():
+
+    def __init__(self, distance_limit, items_considered) -> None:
+        self.distance_limit = distance_limit
+        self.distance_all = []
+        self.items_considered = items_considered
+
+    def distance_store(self, distance: float) -> list:
+        self.distance_all.append(distance)
+
+    def avg_distance(self) -> float:
+        return np.mean(self.distance_all[-self.items_considered:])
+
+    def check_distance_exception(self) -> bool:
+
+        if self.avg_distance() < self.distance_limit:
+            return True
+        else: return False
+
 # distance from camera to object(face) measured
 # centimeter
-Known_distance = 76.2
+Known_distance = 60
  
  
 # width of face in the real world or Object Plane
 # centimeter
-Known_width = 14.3
+Known_width = 13
  
 # Colors
 GREEN = (0, 255, 0)
@@ -19,7 +42,8 @@ BLACK = (0, 0, 0)
 fonts = cv2.FONT_HERSHEY_COMPLEX
  
 # face detector object
-face_detector = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+face_detector = cv2.CascadeClassifier('./haar-cascade-files-master/haarcascade_frontalface_default.xml')
+
  
 # focal length finder function
 def Focal_Length_Finder(measured_distance, real_width, width_in_rf_image):
@@ -59,11 +83,11 @@ def face_data(image):
  
     # return the face width in pixel
     return face_width
- 
- 
+
 # reading reference_image from directory
-ref_image = cv2.imread("sample_image.jpg")
- 
+image_name = "sample_image.jpg"
+ref_image = cv2.imread(image_name)
+
 # find the face width(pixels) in the reference_image
 ref_image_face_width = face_data(ref_image)
  
@@ -73,20 +97,41 @@ ref_image_face_width = face_data(ref_image)
 # known_width(centimeters)
 Focal_length_found = Focal_Length_Finder(
     Known_distance, Known_width, ref_image_face_width)
- 
-print(Focal_length_found)
+
+# print(f'focal length found is {Focal_length_found}')
  
 # show the reference image
-cv2.imshow("sample_image.jpg", ref_image)
+cv2.imshow(image_name, ref_image)
  
 # initialize the camera object so that we
 # can get frame from it
 cap = cv2.VideoCapture(0)
  
+if not cap. isOpened():
+    raise IOError("Cannot open webcam")
+
+distance_check = distance_check(distance_limit=50, items_considered=20)
+
+distance_dict = {
+    'image_name':[],
+    'date_time':[],
+    'distances':[],
+    'avg_distances':[],
+    'distance_limit':[]
+
+}
+
+image_open = True
+process_pid = None
+
+f = open("distance.txt", 'w')
+columns = 'image_name|date_time|distances|avg_distances|distance_limit'
+f.write(f'{columns}\n')
+
 # looping through frame, incoming from
 # camera/video
-while True:
- 
+while cap.isOpened():
+    row = []
     # reading the frame from camera
     _, frame = cap.read()
  
@@ -103,9 +148,14 @@ while True:
         # these arguments the Focal_Length,
         # Known_width(centimeters),
         # and Known_distance(centimeters)
+        
         Distance = Distance_finder(
             Focal_length_found, Known_width, face_width_in_frame)
- 
+        
+        now = datetime.now()
+
+        distance_check.distance_store(Distance)
+
         # draw line as background of text
         cv2.line(frame, (30, 30), (230, 30), RED, 32)
         cv2.line(frame, (30, 30), (230, 30), BLACK, 28)
@@ -114,7 +164,45 @@ while True:
         cv2.putText(
             frame, f"Distance: {round(Distance,2)} CM", (30, 35),
           fonts, 0.6, GREEN, 2)
- 
+
+        avg_distance = distance_check.avg_distance()
+        print(f'now: {now}; distance: {round(Distance,2)} CM; avg distance: {avg_distance}')
+        row.append(image_name)
+        row.append(str(now))
+        row.append(str(Distance))
+        row.append(str(avg_distance))
+        row.append(str(distance_check.distance_limit))
+        row = '|'.join(row)
+
+        f.write(f'{row}\n')
+
+        if distance_check.check_distance_exception():
+            print('Too close')
+            
+            if not image_open:
+                cwd = os.path.join(os.getcwd(), image_name)
+                os.system('{} {}'.format('open', cwd))
+                image_open = True
+            else:
+                pass
+        
+        else: 
+            if image_open:
+                processes = os.popen('ps -ax').read().split('\n')
+
+                for process in processes:
+                    if process.split('/')[-1] == 'Preview':
+                        process_pid = process.split(' ')[0]
+
+                os.system(f'kill {process_pid}')  
+                image_open = False
+            
+            print('too close')
+
+
+    else: print('face not recognised')
+
+
     # show the frame on the screen
     cv2.imshow("frame", frame)
  
