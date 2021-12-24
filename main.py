@@ -2,6 +2,10 @@ import cv2
 from datetime import datetime
 import numpy as np
 import os
+import matplotlib.pyplot as plt 
+import matplotlib.animation as animation
+from matplotlib import style
+from sqlalchemy import create_engine
 
  
 class distance_check():
@@ -22,6 +26,14 @@ class distance_check():
         if self.avg_distance() < self.distance_limit:
             return True
         else: return False
+
+class mysql_upload():
+
+    def __init__(self, table_name) -> None:
+        
+        self.sqlEngine = create_engine('mysql+pymysql://root:@127.0.0.1/face_to_monitor_distance', pool_recycle=3600),
+        self.dbConnection = self.sqlEngine.connect(),
+
 
 # distance from camera to object(face) measured
 # centimeter
@@ -111,15 +123,6 @@ if not cap. isOpened():
     raise IOError("Cannot open webcam")
 
 distance_check = distance_check(distance_limit=50, items_considered=20)
-
-distance_dict = {
-    'image_name':[],
-    'date_time':[],
-    'distances':[],
-    'avg_distances':[],
-    'distance_limit':[]
-
-}
 
 image_open = True
 process_pid = None
