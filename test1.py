@@ -1,6 +1,7 @@
 import cv2
 from datetime import datetime
 import numpy as np
+import os
 
  
 class distance_check():
@@ -120,6 +121,8 @@ distance_dict = {
 
 }
 
+image_open = True
+
 # looping through frame, incoming from
 # camera/video
 while cap.isOpened():
@@ -167,8 +170,21 @@ while cap.isOpened():
 
         if distance_check.check_distance_exception():
             print('Too close')
+            
+            cwd = os.path.join(os.getcwd(), "sample_image.png")
+            os.system('{} {}'.format('open', cwd))
+            image_open = True
         
-        else: pass
+        else: 
+            if image_open:
+                processes = os.popen('ps -ax').read().split('\n')
+
+                for process in processes:
+                    if process.split('/')[-1] == 'Preview':
+                        process_pid = process.split(' ')[0]
+
+                os.system(f'kill {process_pid}')  
+
 
     else: print('face not recognised')
 
