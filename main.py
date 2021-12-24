@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib import style
 from sqlalchemy import create_engine
+import pymysql
 
  
 class distance_check():
@@ -27,12 +28,64 @@ class distance_check():
             return True
         else: return False
 
-class mysql_upload():
+class upload_mysql():
 
     def __init__(self, table_name) -> None:
+        """
+        If mysql is not launched, run the following scripts:
+        mysql -u root
+        """
+        self.sqlEngine = create_engine('mysql+pymysql://root:@127.0.0.1/face_to_monitor_distance', \
+                        pool_recycle=3600)
+        self.dbConnection = self.sqlEngine.connect()
+
+        self.table_name = table_name
+
+        self.table_existence = self._table_existence()
+
+        if not self.table_existence:
+            sql_query = f"""
+            create table {self.table_name} (
+                image_name nvarchar(40),
+                date_time DATETIME(3),
+                distances decimal(19,4),
+                avg_distance decimal(19,4),
+                distance_limit float
+            )
+            
+            """
+            self.dbConnection.execute(sql_query)
         
-        self.sqlEngine = create_engine('mysql+pymysql://root:@127.0.0.1/face_to_monitor_distance', pool_recycle=3600),
-        self.dbConnection = self.sqlEngine.connect(),
+        else: pass
+
+
+    def _table_existence(self):
+
+        # cursor = self.dbConnection.execute()
+        sql_query = f"""
+                SELECT COUNT(*)
+                FROM information_schema.tables 
+                WHERE table_schema = 'face_to_monitor_distance'
+                AND table_name=  '{self.table_name}'
+        """
+
+        cursor = self.dbConnection.execute(sql_query)
+
+        row = cursor.fetchone()
+
+        if  row[0] == 1:
+            return True
+
+        else: return False
+
+    def insert_table(self, input: list) -> None:
+        image_name, date_time, distances, avg_distance, distance_limit = input
+        sql_query = f"""
+            insert into {self.table_name}(image_name, date_time, distances, avg_distance, distance_limit)
+            values('{image_name}','{date_time}',{round(distances,4)},{round(avg_distance,4)},{distance_limit})
+        """
+
+        self.dbConnection.execute(sql_query)
 
 
 # distance from camera to object(face) measured
@@ -127,6 +180,9 @@ distance_check = distance_check(distance_limit=50, items_considered=20)
 image_open = True
 process_pid = None
 
+ml = upload_mysql('test1')
+print(ml.table_existence)
+
 f = open("distance.txt", 'w')
 columns = 'image_name|date_time|distances|avg_distances|distance_limit'
 f.write(f'{columns}\n')
@@ -171,16 +227,17 @@ while cap.isOpened():
         avg_distance = distance_check.avg_distance()
         print(f'now: {now}; distance: {round(Distance,2)} CM; avg distance: {avg_distance}')
         row.append(image_name)
-        row.append(str(now))
-        row.append(str(Distance))
-        row.append(str(avg_distance))
-        row.append(str(distance_check.distance_limit))
-        row = '|'.join(row)
+        row.append(now)
+        row.append(Distance)
+        row.append(avg_distance)
+        row.append(distance_check.distance_limit)
 
-        f.write(f'{row}\n')
+        ml.insert_table(row)
+        # row = '|'.join(row)
+
+        # f.write(f'{row}\n')
 
         if distance_check.check_distance_exception():
-            print('Too close')
             
             if not image_open:
                 cwd = os.path.join(os.getcwd(), image_name)
