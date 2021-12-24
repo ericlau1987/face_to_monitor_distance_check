@@ -181,11 +181,6 @@ image_open = True
 process_pid = None
 
 ml = upload_mysql('test1')
-print(ml.table_existence)
-
-f = open("distance.txt", 'w')
-columns = 'image_name|date_time|distances|avg_distances|distance_limit'
-f.write(f'{columns}\n')
 
 # looping through frame, incoming from
 # camera/video
@@ -233,12 +228,9 @@ while cap.isOpened():
         row.append(distance_check.distance_limit)
 
         ml.insert_table(row)
-        # row = '|'.join(row)
-
-        # f.write(f'{row}\n')
 
         if distance_check.check_distance_exception():
-            
+            print('too close')
             if not image_open:
                 cwd = os.path.join(os.getcwd(), image_name)
                 os.system('{} {}'.format('open', cwd))
@@ -256,9 +248,6 @@ while cap.isOpened():
 
                 os.system(f'kill {process_pid}')  
                 image_open = False
-            
-            print('too close')
-
 
     else: print('face not recognised')
 
