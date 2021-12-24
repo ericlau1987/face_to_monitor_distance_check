@@ -171,9 +171,12 @@ while cap.isOpened():
         if distance_check.check_distance_exception():
             print('Too close')
             
-            cwd = os.path.join(os.getcwd(), "sample_image.png")
-            os.system('{} {}'.format('open', cwd))
-            image_open = True
+            if not image_open:
+                cwd = os.path.join(os.getcwd(), image_name)
+                os.system('{} {}'.format('open', cwd))
+                image_open = True
+            else:
+                pass
         
         else: 
             if image_open:
@@ -184,6 +187,9 @@ while cap.isOpened():
                         process_pid = process.split(' ')[0]
 
                 os.system(f'kill {process_pid}')  
+                image_open = False
+            
+            print('too close')
 
 
     else: print('face not recognised')
