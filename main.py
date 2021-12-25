@@ -90,12 +90,12 @@ class upload_mysql():
 
 # distance from camera to object(face) measured
 # centimeter
-Known_distance = 60
+Known_distance = 43
  
  
 # width of face in the real world or Object Plane
 # centimeter
-Known_width = 13
+Known_width = 10
  
 # Colors
 GREEN = (0, 255, 0)
@@ -150,7 +150,8 @@ def face_data(image):
     return face_width
 
 # reading reference_image from directory
-image_name = "sample_image.jpg"
+image_name = "jeffrey_image.png"
+popup_image_name = 'sample_image.jpg'
 ref_image = cv2.imread(image_name)
 
 # find the face width(pixels) in the reference_image
@@ -166,7 +167,7 @@ Focal_length_found = Focal_Length_Finder(
 # print(f'focal length found is {Focal_length_found}')
  
 # show the reference image
-cv2.imshow(image_name, ref_image)
+# cv2.imshow(image_name, ref_image)
  
 # initialize the camera object so that we
 # can get frame from it
@@ -177,7 +178,7 @@ if not cap. isOpened():
 
 distance_check = distance_check(distance_limit=50, items_considered=20)
 
-image_open = True
+image_open = False
 process_pid = None
 
 ml = upload_mysql('test1')
@@ -232,7 +233,7 @@ while cap.isOpened():
         if distance_check.check_distance_exception():
             print('too close')
             if not image_open:
-                cwd = os.path.join(os.getcwd(), image_name)
+                cwd = os.path.join(os.getcwd(), popup_image_name)
                 os.system('{} {}'.format('open', cwd))
                 image_open = True
             else:
