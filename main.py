@@ -87,6 +87,10 @@ class upload_mysql():
 
         self.dbConnection.execute(sql_query)
 
+Distance = 0
+
+
+
 
 # distance from camera to object(face) measured
 # centimeter
@@ -173,10 +177,16 @@ Focal_length_found = Focal_Length_Finder(
 # can get frame from it
 cap = cv2.VideoCapture(0)
  
-if not cap. isOpened():
+if not cap.isOpened():
     raise IOError("Cannot open webcam")
 
 distance_check = distance_check(distance_limit=50, items_considered=20)
+
+############################
+
+
+
+############################
 
 image_open = False
 process_pid = None
@@ -244,10 +254,13 @@ while cap.isOpened():
                 processes = os.popen('ps -ax').read().split('\n')
 
                 for process in processes:
+                    process = process.strip()
                     if process.split('/')[-1] == 'Preview':
                         process_pid = process.split(' ')[0]
+                        print(f'process: {process}; process_id: {process_pid}')
 
                 os.system(f'kill {process_pid}')  
+                process_pid = None
                 image_open = False
 
     else: print('face not recognised')
