@@ -5,92 +5,8 @@ import os
 import matplotlib.pyplot as plt 
 import matplotlib.animation as animation
 from matplotlib import style
-from sqlalchemy import create_engine
-import pymysql
-
- 
-class distance_check():
-
-    def __init__(self, distance_limit, items_considered) -> None:
-        self.distance_limit = distance_limit
-        self.distance_all = []
-        self.items_considered = items_considered
-
-    def distance_store(self, distance: float) -> list:
-        self.distance_all.append(distance)
-
-    def avg_distance(self) -> float:
-        return np.mean(self.distance_all[-self.items_considered:])
-
-    def check_distance_exception(self) -> bool:
-
-        if self.avg_distance() < self.distance_limit:
-            return True
-        else: return False
-
-class upload_mysql():
-
-    def __init__(self, table_name) -> None:
-        """
-        If mysql is not launched, run the following scripts:
-        mysql -u root
-        """
-        self.sqlEngine = create_engine('mysql+pymysql://root:@127.0.0.1/face_to_monitor_distance', \
-                        pool_recycle=3600)
-        self.dbConnection = self.sqlEngine.connect()
-
-        self.table_name = table_name
-
-        self.table_existence = self._table_existence()
-
-        if not self.table_existence:
-            sql_query = f"""
-            create table {self.table_name} (
-                image_name nvarchar(40),
-                date_time DATETIME(3),
-                distances decimal(19,4),
-                avg_distance decimal(19,4),
-                distance_limit float
-            )
-            
-            """
-            self.dbConnection.execute(sql_query)
-        
-        else: pass
-
-
-    def _table_existence(self):
-
-        # cursor = self.dbConnection.execute()
-        sql_query = f"""
-                SELECT COUNT(*)
-                FROM information_schema.tables 
-                WHERE table_schema = 'face_to_monitor_distance'
-                AND table_name=  '{self.table_name}'
-        """
-
-        cursor = self.dbConnection.execute(sql_query)
-
-        row = cursor.fetchone()
-
-        if  row[0] == 1:
-            return True
-
-        else: return False
-
-    def insert_table(self, input: list) -> None:
-        image_name, date_time, distances, avg_distance, distance_limit = input
-        sql_query = f"""
-            insert into {self.table_name}(image_name, date_time, distances, avg_distance, distance_limit)
-            values('{image_name}','{date_time}',{round(distances,4)},{round(avg_distance,4)},{distance_limit})
-        """
-
-        self.dbConnection.execute(sql_query)
-
-Distance = 0
-
-
-
+from Upload_mysql import upload_mysql
+from Distance_check import distance_check
 
 # distance from camera to object(face) measured
 # centimeter
@@ -182,16 +98,12 @@ if not cap.isOpened():
 
 distance_check = distance_check(distance_limit=50, items_considered=20)
 
-############################
-
-
-
-############################
-
+# image_open is to detect whether popup_image is open or not
 image_open = False
+# initalize the process_pid of Preview to close the popup_image
 process_pid = None
 
-ml = upload_mysql('test1')
+ml = upload_mysql('distance')
 
 # looping through frame, incoming from
 # camera/video
@@ -231,17 +143,24 @@ while cap.isOpened():
           fonts, 0.6, GREEN, 2)
 
         avg_distance = distance_check.avg_distance()
-        print(f'now: {now}; distance: {round(Distance,2)} CM; avg distance: {avg_distance}')
+        # print(f'now: {now}; distance: {round(Distance,2)} CM; avg distance: {avg_distance}')
+        # append items into row
         row.append(image_name)
         row.append(now)
         row.append(Distance)
         row.append(avg_distance)
         row.append(distance_check.distance_limit)
 
+        # insert items into mysql
         ml.insert_table(row)
 
+        # check whether distance is too close
+        #if yes, show the popup_image as warning
         if distance_check.check_distance_exception():
-            print('too close')
+            # print('too close')
+            # if the popup_image is still open, 
+            # don't need to open it again
+            # otherwise, open it
             if not image_open:
                 cwd = os.path.join(os.getcwd(), popup_image_name)
                 os.system('{} {}'.format('open', cwd))
@@ -250,14 +169,19 @@ while cap.isOpened():
                 pass
         
         else: 
+            # if popup_image is open and distance is not close,
+            # close the image by killing Preview
             if image_open:
+                # list all processes
                 processes = os.popen('ps -ax').read().split('\n')
 
                 for process in processes:
+                    # remove leading spaces
                     process = process.strip()
+                    # identify process pid for the process relevant to Preview
                     if process.split('/')[-1] == 'Preview':
                         process_pid = process.split(' ')[0]
-                        print(f'process: {process}; process_id: {process_pid}')
+                        # print(f'process: {process}; process_id: {process_pid}')
 
                 os.system(f'kill {process_pid}')  
                 process_pid = None

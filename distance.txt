@@ -1,1 +1,0 @@
-image_name|date_time|distances|avg_distances|distance_limit
