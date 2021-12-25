@@ -1,3 +1,4 @@
+import numpy as np
 class distance_check():
 
     def __init__(self, distance_limit, items_considered) -> None:
