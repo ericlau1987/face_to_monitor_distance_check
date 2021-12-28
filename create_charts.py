@@ -63,7 +63,7 @@ fig_indicator.add_trace(go.Indicator(
     mode = "number+delta",
     value = avg_distance_latest_date,
     delta = {'reference': avg_distance_prior_date},
-    title = {'text': "Average Distances (latest vs prior date)"},
+    title = {'text': "Average Distances (CM) (latest vs prior date)"},
     domain = {'row': 0, 'column': 1}))
 
 
