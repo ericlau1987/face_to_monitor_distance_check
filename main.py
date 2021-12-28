@@ -104,6 +104,7 @@ image_open = False
 process_pid = None
 
 ml = upload_mysql('distance')
+# ml = upload_mysql('test1')
 
 # looping through frame, incoming from
 # camera/video
@@ -129,6 +130,8 @@ while cap.isOpened():
         Distance = Distance_finder(
             Focal_length_found, Known_width, face_width_in_frame)
         
+        Distance = distance_check.correct_large_distance(Distance)
+
         now = datetime.now()
 
         distance_check.distance_store(Distance)
@@ -187,7 +190,9 @@ while cap.isOpened():
                 process_pid = None
                 image_open = False
 
-    else: print('face not recognised')
+    else: 
+        pass
+        # print('face not recognised')
 
 
     # show the frame on the screen
