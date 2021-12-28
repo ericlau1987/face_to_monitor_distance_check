@@ -129,6 +129,8 @@ while cap.isOpened():
         Distance = Distance_finder(
             Focal_length_found, Known_width, face_width_in_frame)
         
+        Distance = distance_check.correct_large_distance(Distance)
+
         now = datetime.now()
 
         distance_check.distance_store(Distance)
