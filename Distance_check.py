@@ -21,7 +21,7 @@ class distance_check():
     def correct_large_distance(self, distance: float) -> float:
         if self.distance_all:
             last_distance = self.distance_all[-1]
-            if distance >= last_distance * 1.7:
+            if distance >= last_distance * 1.5:
                 return last_distance
             else:
                 return distance
