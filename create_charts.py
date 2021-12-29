@@ -113,7 +113,83 @@ fig_distance_all.update_layout(
 
 # create watch duration per day
 
-df
+df = pd.read_sql_query(
+
+    """
+    with date_time_diff as (
+        select *,
+            lag(date_time) over (order by date_time) as prior_date_time,
+            TIMESTAMPDIFF(MINUTE,lag(date_time) over (order by date_time),date_time) as date_time_diff,
+            date(date_time) as date
+        from distance
+    )
+
+    ,date_segment as (
+        select *,
+            right(concat('00' , cast(row_number() over (partition by date order by date_time) as char)), 2) as row_no
+        from date_time_diff
+        where date_time_diff > 60 
+            or prior_date_time is null
+    )
+
+    ,date_sessions as (
+        select *,
+            concat(replace(CAST(date AS char), '-', '_'), '_', row_no) as date_segment_id
+        from date_segment
+        where date_time <> (select max(date_time) from distance)
+    )
+
+    select i.*,
+        case when date_segment_id is null 
+            then first_value(date_segment_id) over (partition by sessions ORDER BY date_time rows between unbounded preceding and current row)
+            else date_segment_id end as date_session_id
+    from (
+        select a.*,
+            b.date_segment_id,
+            sum(case when date_segment_id is null then 0 else 1 end) 
+              over(order by date_time) as sessions
+        from distance a
+        left join date_sessions b
+        on a.date_time = b.date_time
+    ) i
+    
+    """
+
+,dbConnection)
+
+df_date_range = df.groupby(by='date_session_id', as_index=False).agg({'date_time':['min', 'max']})
+df_date_range.columns = ['date_session_id', 'min_date_time', 'max_date_time']
+df_date_range['duration'] = df_date_range['max_date_time'] - df_date_range['min_date_time']
+df_date_range['hours_duration'] = round(df_date_range['duration']/pd.Timedelta('1 hour'),4)
+df_date_range['date'] = df_date_range['min_date_time'].dt.date.astype('datetime64')
+
+hours_duration_sum_latest_date = df_date_range[df_date_range['date'] == latest_date]['hours_duration'].sum()
+times_sum_latest_date = df_date_range[df_date_range['date'] == latest_date]['hours_duration'].count()
+hours_duration_sum_prior_date = df_date_range[df_date_range['date'] == prior_date]['hours_duration'].sum()
+
+
+fig_indicator_duration = go.Figure()
+fig_indicator_duration.add_trace(go.Indicator(
+    value = times_sum_latest_date,
+    delta = {'reference': 3},
+    gauge = {
+        'axis': {'visible': False}},
+    title = {'text': "Latest date: No. of times on video watch vs threshold"},
+    domain = {'row': 0, 'column': 0}))
+
+fig_indicator_duration.add_trace(go.Indicator(
+    mode = "number+delta",
+    value = hours_duration_sum_latest_date,
+    delta = {'reference': hours_duration_sum_prior_date},
+    title = {'text': "Video watching (hours) (latest vs prior date)"},
+    domain = {'row': 0, 'column': 1}))
+
+fig_indicator_duration.update_layout(
+    grid = {'rows': 1, 'columns': 2, 'pattern': "independent"},
+    template = {'data' : {'indicator': [{
+        'mode' : "number+delta+gauge",
+        'delta' : {'reference': 90}}]
+                         }})
 
 app.layout = html.Div(children=[
     html.H1(children='Hello Eric'),
@@ -134,6 +210,10 @@ app.layout = html.Div(children=[
     dcc.Graph(
         id='graph1',
         figure=fig_distance_all
+    ),
+    dcc.Graph(
+        id='indicator_duration',
+        figure=fig_indicator_duration
     )
 
 ])
