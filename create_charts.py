@@ -111,6 +111,10 @@ fig_distance_all.update_layout(
 
 )
 
+# create watch duration per day
+
+df
+
 app.layout = html.Div(children=[
     html.H1(children='Hello Eric'),
 
