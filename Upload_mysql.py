@@ -22,6 +22,7 @@ class upload_mysql():
                 image_name nvarchar(40),
                 date_time DATETIME(3),
                 distances decimal(19,4),
+                distance_updated decimal(19,4),
                 avg_distance decimal(19,4),
                 distance_limit float
             )
@@ -52,10 +53,10 @@ class upload_mysql():
         else: return False
 
     def insert_table(self, input: list) -> None:
-        image_name, date_time, distances, avg_distance, distance_limit = input
+        image_name, date_time, distances, distance_updated, avg_distance, distance_limit = input
         sql_query = f"""
-            insert into {self.table_name}(image_name, date_time, distances, avg_distance, distance_limit)
-            values('{image_name}','{date_time}',{round(distances,4)},{round(avg_distance,4)},{distance_limit})
+            insert into {self.table_name}(image_name, date_time, distances, distance_updated, avg_distance, distance_limit)
+            values('{image_name}','{date_time}',{round(distances,4)},{round(distance_updated,4)},{round(avg_distance,4)},{distance_limit})
         """
 
         self.dbConnection.execute(sql_query)

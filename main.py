@@ -104,7 +104,7 @@ image_open = False
 process_pid = None
 
 ml = upload_mysql('distance')
-# ml = upload_mysql('test1')
+# ml = upload_mysql('test2')
 
 # looping through frame, incoming from
 # camera/video
@@ -130,7 +130,7 @@ while cap.isOpened():
         Distance = Distance_finder(
             Focal_length_found, Known_width, face_width_in_frame)
         
-        Distance = distance_check.correct_large_distance(Distance)
+        Distance_updated = distance_check.correct_large_distance(Distance)
 
         now = datetime.now()
 
@@ -151,6 +151,7 @@ while cap.isOpened():
         row.append(image_name)
         row.append(now)
         row.append(Distance)
+        row.append(Distance_updated)
         row.append(avg_distance)
         row.append(distance_check.distance_limit)
 
