@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine
-import pymysql
+import psycopg2
 
 class upload_mysql():
 
@@ -8,8 +8,8 @@ class upload_mysql():
         If mysql is not launched, run the following scripts:
         mysql -u root
         """
-        self.sqlEngine = create_engine('mysql+pymysql://root:@127.0.0.1/face_to_monitor_distance', \
-                        pool_recycle=3600)
+        self.sqlEngine = create_engine('postgresql+psycopg2://postgres:postgres@postgres_distance_check/distance_check')
+
         self.dbConnection = self.sqlEngine.connect()
 
         self.table_name = table_name

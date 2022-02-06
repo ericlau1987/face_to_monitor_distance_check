@@ -8,7 +8,7 @@ import plotly.express as px
 import plotly.graph_objs as go
 import pandas as pd
 from sqlalchemy import create_engine
-import pymysql
+import psycopg2
 import numpy as np
 
 def data_processing(input: pd.DataFrame) -> pd.DataFrame:
@@ -22,8 +22,7 @@ app = dash.Dash(__name__)
 # assume you have a "long-form" data frame
 # see https://plotly.com/python/px-arguments/ for more options
 
-sqlEngine = create_engine('mysql+pymysql://root:@127.0.0.1/face_to_monitor_distance', \
-                        pool_recycle=3600)
+sqlEngine = create_engine('postgresql+psycopg2://postgres:postgres@postgres_distance_check/distance_check')
 dbConnection = sqlEngine.connect()
 
 df = pd.read_sql_query(

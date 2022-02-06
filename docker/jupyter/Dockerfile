@@ -10,4 +10,6 @@ RUN pip install plotly==5.5.0 \
                 dash==2.1.0 \
                 opencv-python==4.5.5.62 
 
+Run device=/dev/video0:/dev/video0
+
 USER jovyan
