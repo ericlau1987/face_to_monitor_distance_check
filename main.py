@@ -27,9 +27,9 @@ BLACK = (0, 0, 0)
 fonts = cv2.FONT_HERSHEY_COMPLEX
  
 # face detector object
-# face_detector = cv2.CascadeClassifier('workspace/haar-cascade-files-master/haarcascade_frontalface_default.xml')
-face_detector = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+face_detector = cv2.CascadeClassifier('./haar-cascade-files-master/haarcascade_frontalface_default.xml')
 
+ 
 # focal length finder function
 def Focal_Length_Finder(measured_distance, real_width, width_in_rf_image):
  
@@ -56,7 +56,6 @@ def face_data(image):
     # detecting face in the image
     # faces = face_detector.detectMultiScale(gray_image, 1.3, 5)
     faces = face_detector.detectMultiScale(gray_image)
- 
     # looping through the faces detect in the image
     # getting coordinates x, y , width and height
     for (x, y, h, w) in faces:
@@ -71,11 +70,9 @@ def face_data(image):
     return face_width
 
 # reading reference_image from directory
-# image_name = "../images/jeffrey_image.png"
-image_name = "/workspace/images/jeffrey_image.png"
-popup_image_name = '/workspace/images/sample_image.jpg'
+image_name = "jeffrey_image.png"
+popup_image_name = 'sample_image.jpg'
 ref_image = cv2.imread(image_name)
-
 
 # find the face width(pixels) in the reference_image
 ref_image_face_width = face_data(ref_image)
