@@ -8,7 +8,7 @@ services:
      - 8888:8888
     volumes:
       - .:/home/jovyan
-  postgres_house_prices:
+  postgres_distance_check:
     container_name: postgres_distance_check
     build: ./docker/postgres
     image: postgres:distance_check

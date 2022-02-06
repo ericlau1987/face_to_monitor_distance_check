@@ -130,5 +130,8 @@ dmypy.json
 
 .DS_Store
 
-# vs code
-.devcontainer/
+# # vs code
+# .devcontainer/
+.gitconfig
+.ssh/
+.vscode-server/
