@@ -1,0 +1,25 @@
+version: '3'
+services:
+  jupyter_distance_check:
+    container_name: jupyter_distance_check
+    build: ./docker/jupyter
+    image: jupyter:distance_check
+    ports:
+     - 8888:8888
+    volumes:
+      - .:/home/jovyan
+  postgres_house_prices:
+    container_name: postgres_distance_check
+    build: ./docker/postgres
+    image: postgres:distance_check
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    user: postgres
+    environment:
+      # - POSTGRES_HOST_AUTH_METHOD=trust
+      - POSTGRES_DB=distance_check
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+
+volumes:
+  postgres_data:
